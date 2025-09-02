@@ -7,7 +7,7 @@ CREATE TABLE dim_status (
 );
 
 CREATE TABLE dim_time (
-	time_id serial,
+	time_id integer,
 	time_year varchar(4),
 	time_date date,
 	time_of_day time,
@@ -42,7 +42,7 @@ CREATE TABLE dim_drivers (
 	driver_ref varchar(50),
 	forename varchar(30),
 	sourname varchar(30),
-	dob DATE,
+	dob date,
 	nationality varchar(30),
 	url varchar(100),
 	driver_num integer,
@@ -114,13 +114,13 @@ CREATE TABLE fact_lap_times (
 );
 
 CREATE TABLE fact_pit_stops (
-	pt_id serial,
+	ps_id serial,
 	race_id integer REFERENCES dim_races(race_id),
 	driver_id integer REFERENCES dim_drivers(driver_id),
 	stop integer,
 	lap integer,
-	pt_time varchar(20), -- pit stop start time
+	ps_time time, -- pit stop start time
 	duration interval,
 	milliseconds integer,
-	PRIMARY KEY(pt_id)
+	PRIMARY KEY(ps_id)
 );
