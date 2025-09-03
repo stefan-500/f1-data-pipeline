@@ -82,7 +82,7 @@ CREATE TABLE staging (
 
 -- Import data from CSV file to staging table
 -- Paste the command into psql shell, adjust file path
-\COPY staging(first_col, result_id, race_id, driver_id, constructor_id, car_number, grid, car_position, position_text, position_order, points, laps, passing_time, milliseconds, fastest_lap, driver_rank, fastest_lap_time, fastest_lap_speed, status_id, time_year, round, circuit_id, race_name, time_date, time_of_day, race_url, fp1_date, fp1_time, fp2_date, fp2_time, fp3_date, fp3_time, quali_date, quali_time, sprint_date, sprint_time, circuit_ref, circuit_name, circuit_location, country, latitude, longitude, altitude, circuit_url, driver_ref, driver_num, code, forename, sourname, dob, driver_nationality, driver_url, const_ref, const_name, const_nationality, const_url, lt_lap, lt_position, lt_passing_time, lt_milliseconds, stop, ps_lap, ps_time, ps_duration, ps_milliseconds, driv_stand_id, ds_points, ds_position, ds_position_text, ds_wins, const_stand_id, cs_points, cs_position, cs_position_text, cs_wins, status) FROM 'path\to\file' DELIMITER ',' CSV HEADER NULL AS '\N' ENCODING 'utf8';
+\COPY staging(first_col, result_id, race_id, driver_id, constructor_id, car_number, grid, car_position, position_text, position_order, points, laps, passing_time, milliseconds, fastest_lap, driver_rank, fastest_lap_time, fastest_lap_speed, status_id, time_year, round, circuit_id, race_name, time_date, time_of_day, race_url, fp1_date, fp1_time, fp2_date, fp2_time, fp3_date, fp3_time, quali_date, quali_time, sprint_date, sprint_time, circuit_ref, circuit_name, circuit_location, country, latitude, longitude, altitude, circuit_url, driver_ref, driver_num, code, forename, sourname, dob, driver_nationality, driver_url, const_ref, const_name, const_nationality, const_url, lt_lap, lt_position, lt_passing_time, lt_milliseconds, stop, ps_lap, ps_time, ps_duration, ps_milliseconds, driv_stand_id, ds_points, ds_position, ds_position_text, ds_wins, const_stand_id, cs_points, cs_position, cs_position_text, cs_wins, status) FROM 'path/to/file' DELIMITER ',' CSV HEADER NULL AS '\N' ENCODING 'utf8';
 
 -- Drop unnecessary columns
 ALTER TABLE staging
@@ -183,11 +183,12 @@ ORDER BY constructor_id;
 
 -- SELECT * FROM fact_driver_standings;
 
-INSERT INTO fact_driver_standings(driv_stand_id, driver_id, constructor_id, points, driv_position, position_text, wins)
-SELECT DISTINCT s.driv_stand_id, dd.driver_id, dc.constructor_id, s.ds_points, s.ds_position, ds_position_text, ds_wins
+INSERT INTO fact_driver_standings(driv_stand_id, driver_id, constructor_id, race_id, points, driv_position, position_text, wins)
+SELECT DISTINCT s.driv_stand_id, dd.driver_id, dc.constructor_id, dr.race_id, s.ds_points, s.ds_position, ds_position_text, ds_wins
 FROM staging s
 INNER JOIN dim_drivers dd ON dd.driver_id = s.driver_id
 INNER JOIN dim_constructors dc ON dc.constructor_id = s.constructor_id
+INNER JOIN dim_races dr ON dr.race_id = s.race_id
 ORDER BY driv_stand_id;
 
 -- CONSTRUCTOR STANDINGS
@@ -197,10 +198,11 @@ ORDER BY driv_stand_id;
 
 -- SELECT * FROM fact_constructor_standings;
 
-INSERT INTO fact_constructor_standings(const_stand_id, constructor_id, points, const_position, position_text, wins)
-SELECT DISTINCT s.const_stand_id, s.constructor_id, s.cs_points, s.cs_position, s.cs_position_text, s.cs_wins
+INSERT INTO fact_constructor_standings(const_stand_id, constructor_id, race_id, points, const_position, position_text, wins)
+SELECT DISTINCT s.const_stand_id, dc.constructor_id, dr.race_id, s.cs_points, s.cs_position, s.cs_position_text, s.cs_wins
 FROM staging s
 INNER JOIN dim_constructors dc ON dc.constructor_id = s.constructor_id
+INNER JOIN dim_races dr ON dr.race_id = s.race_id
 ORDER BY const_stand_id;
 
 -- LAP TIMES

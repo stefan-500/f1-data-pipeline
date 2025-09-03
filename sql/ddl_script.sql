@@ -63,6 +63,7 @@ CREATE TABLE fact_driver_standings (
 	driv_stand_id serial,
 	driver_id integer REFERENCES dim_drivers(driver_id),
 	constructor_id integer REFERENCES dim_constructors(constructor_id),
+	race_id integer REFERENCES dim_races(race_id),
 	points float,
 	driv_position integer,
 	position_text varchar(2),
@@ -73,6 +74,7 @@ CREATE TABLE fact_driver_standings (
 CREATE TABLE fact_constructor_standings (
 	const_stand_id serial,
 	constructor_id integer REFERENCES dim_constructors(constructor_id),
+	race_id integer REFERENCES dim_races(race_id),
 	points float,
 	const_position integer,
 	position_text varchar(2),
