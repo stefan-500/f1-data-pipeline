@@ -1,3 +1,4 @@
+from models import metadata
 from models.base import Base
 from database.init_db import engine
 

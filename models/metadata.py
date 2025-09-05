@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from typing import List
-from sqlalchemy import String, Date, Time, Float, Interval
+from sqlalchemy.types import Integer, String, Date, Time, Float, Interval, CHAR
 from datetime import date, time, timedelta
 from sqlalchemy import ForeignKey
 
@@ -11,7 +11,7 @@ class Status(Base):
     __tablename__ = "dim_status"
 
     status_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    status: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), nullable=True)
     # TODO
     race_results: Mapped[List["RaceResult"]] = relationship(back_populates="dim_status")
 
@@ -19,22 +19,22 @@ class _Time(Base):
     __tablename__ = "dim_time"
 
     time_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
-    time_year: Mapped[str] = mapped_column(String(4))
-    time_date: Mapped[date] = mapped_column(Date)
-    time_of_day: Mapped[time] = mapped_column(Time)
+    time_year: Mapped[str] = mapped_column(String(4), nullable=True)
+    time_date: Mapped[date] = mapped_column(Date, nullable=True)
+    time_of_day: Mapped[time] = mapped_column(Time, nullable=True)
 
 class Circuit(Base):
     __tablename__ = "dim_circuits"
 
     circuit_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    circuit_ref: Mapped[str] = mapped_column(String(20))
-    circuit_name: Mapped[str] = mapped_column(String(50))
-    url: Mapped[str] = mapped_column(String(100))
-    circuit_location: Mapped[str] = mapped_column(String(45))
-    latitude: Mapped[float]
-    longitude: Mapped[float]
-    altitude: Mapped[int]
-    country: Mapped[str] = mapped_column(String(30))
+    circuit_ref: Mapped[str] = mapped_column(String(20), nullable=True)
+    circuit_name: Mapped[str] = mapped_column(String(50), nullable=True)
+    url: Mapped[str] = mapped_column(String(100), nullable=True)
+    circuit_location: Mapped[str] = mapped_column(String(45), nullable=True)
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    altitude: Mapped[int] = mapped_column(Integer, nullable=True)
+    country: Mapped[str] = mapped_column(String(30), nullable=True)
 
 class Race(Base):
     __tablename__ = "dim_races"
@@ -42,9 +42,9 @@ class Race(Base):
     race_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     time_id: Mapped[int] = mapped_column(ForeignKey('dim_time.time_id'))
     circuit_id: Mapped[int] = mapped_column(ForeignKey('dim_circuits.circuit_id'))
-    race_name: Mapped[str] = mapped_column(String(80))
-    url: Mapped[str] = mapped_column(String(100))
-    round: Mapped[int]
+    race_name: Mapped[str] = mapped_column(String(80), nullable=True)
+    url: Mapped[str] = mapped_column(String(100), nullable=True)
+    round: Mapped[int] = mapped_column(Integer, nullable=True)
     circuit: Mapped["Circuit"] = relationship("Circuit", back_populates="dim_races")
     time: Mapped["_Time"] = relationship("_Time", back_populates="dim_races")
     # TODO
@@ -57,10 +57,10 @@ class Constructor(Base):
     __tablename__ = "dim_constructors"
 
     constructor_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    const_ref: Mapped[str] = mapped_column(String(50))
-    const_name: Mapped[str] = mapped_column(String(30))
-    nationality: Mapped[str] = mapped_column(String(30))
-    url: Mapped[str] = mapped_column(String(100))
+    const_ref: Mapped[str] = mapped_column(String(50), nullable=True)
+    const_name: Mapped[str] = mapped_column(String(30), nullable=True)
+    nationality: Mapped[str] = mapped_column(String(30), nullable=True)
+    url: Mapped[str] = mapped_column(String(100), nullable=True)
     # TODO
     driver_standing: Mapped["DriverStanding"] = relationship(back_populates="dim_constructors")
     # A constructor can be located in many const standings (new const standing list after every race)
@@ -71,14 +71,14 @@ class Driver(Base):
     __tablename__ = "dim_drivers"
 
     driver_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    driver_ref: Mapped[str] = mapped_column(String(50))
-    forename: Mapped[str] = mapped_column(String(30))
-    sourname: Mapped[str] = mapped_column(String(30))
-    dob:  Mapped[date] = mapped_column(Date)
-    nationality: Mapped[str] = mapped_column(String(30))
-    url: Mapped[str] = mapped_column(String(100))
-    driver_num: Mapped[int]
-    code: Mapped[str] = mapped_column(String(3))
+    driver_ref: Mapped[str] = mapped_column(String(50), nullable=True)
+    forename: Mapped[str] = mapped_column(String(30), nullable=True)
+    sourname: Mapped[str] = mapped_column(String(30), nullable=True)
+    dob:  Mapped[date] = mapped_column(Date, nullable=True)
+    nationality: Mapped[str] = mapped_column(String(30), nullable=True)
+    url: Mapped[str] = mapped_column(String(100), nullable=True)
+    driver_num: Mapped[int] = mapped_column(Integer, nullable=True)
+    code: Mapped[str] = mapped_column(CHAR(3), nullable=True)
     # TODO
     driver_standings: Mapped[List["DriverStanding"]] = relationship(back_populates="dim_drivers")
     lap_times: Mapped[List["LapTime"]] = relationship(back_populates="dim_drivers")
@@ -92,10 +92,10 @@ class DriverStanding(Base):
     driver_id: Mapped[int] = mapped_column(ForeignKey('dim_drivers.driver_id')) # BUG
     constructor_id: Mapped[int] = mapped_column(ForeignKey('dim_constructors.constructor_id'))
     race_id: Mapped[int] = mapped_column(ForeignKey('dim_races.race_id'))
-    points: Mapped[float] = mapped_column(Float(precision=1)) # TODO set as in race_results? 
-    driv_position: Mapped[int]
-    position_text: Mapped[str] = mapped_column(String(2))
-    wins: Mapped[int]
+    points: Mapped[float] = mapped_column(Float(precision=1), nullable=True) # TODO set type as in race_results? 
+    driv_position: Mapped[int] = mapped_column(Integer, nullable=True)
+    position_text: Mapped[str] = mapped_column(String(2), nullable=True)
+    wins: Mapped[int] = mapped_column(Integer, nullable=True)
     # TODO
     driver: Mapped["Driver"] = relationship("Driver", back_populates="fact_driver_standings")
     constructors: Mapped[List["Constructor"]] = relationship("Constructor", back_populates="fact_driver_standings")
@@ -107,10 +107,10 @@ class ConstructorStanding(Base):
     const_stand_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     constructor_id: Mapped[int] = mapped_column(ForeignKey('dim_constructors.constructor_id'))
     race_id: Mapped[int] = mapped_column(ForeignKey('dim_races.race_id'))
-    points: Mapped[float] = mapped_column(Float(precision=1)) # TODO set as in race_results?
-    const_position: Mapped[int]
-    position_text: Mapped[str] = mapped_column(String(2))
-    wins: Mapped[int]
+    points: Mapped[float] = mapped_column(Float(precision=1), nullable=True) # TODO set type as in race_results?
+    const_position: Mapped[int] = mapped_column(Integer, nullable=True)
+    position_text: Mapped[str] = mapped_column(String(2), nullable=True)
+    wins: Mapped[int] = mapped_column(Integer, nullable=True)
     # TODO
     constructor: Mapped["Constructor"] = relationship("Constructor", back_populates="fact_constructor_standings")
     race: Mapped["Race"] = relationship("Race", back_populates="fact_constructor_standings")
@@ -121,10 +121,10 @@ class LapTime(Base):
     lt_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     race_id: Mapped[int] = mapped_column(ForeignKey('dim_races.race_id'))
     driver_id: Mapped[int] = mapped_column(ForeignKey('dim_drivers.driver_id'))
-    lap: Mapped[int]
-    lt_position: Mapped[int]
-    passing_time: Mapped[timedelta] = mapped_column(Interval) 
-    milliseconds: Mapped[int]
+    lap: Mapped[int] = mapped_column(Integer, nullable=True)
+    lt_position: Mapped[int] = mapped_column(Integer, nullable=True)
+    passing_time: Mapped[timedelta] = mapped_column(Interval, nullable=True) 
+    milliseconds: Mapped[int] = mapped_column(Integer, nullable=True)
     # TODO
     race: Mapped["Race"] = relationship("Race", back_populates="fact_lap_times")
     driver: Mapped["Driver"] = relationship("Driver", back_populates="fact_lap_times")
@@ -135,11 +135,11 @@ class PitStop(Base):
     ps_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     race_id: Mapped[int] = mapped_column(ForeignKey('dim_races.race_id'))
     driver_id: Mapped[int] = mapped_column(ForeignKey('dim_drivers.driver_id'))
-    stop: Mapped[int]
-    lap: Mapped[int]
-    ps_time: Mapped[time] = mapped_column(Time) # start time
-    duration: Mapped[timedelta] = mapped_column(Interval)
-    milliseconds: Mapped[int]
+    stop: Mapped[int] = mapped_column(Integer, nullable=True)
+    lap: Mapped[int] = mapped_column(Integer, nullable=True)
+    ps_time: Mapped[time] = mapped_column(Time, nullable=True) # start time
+    duration: Mapped[timedelta] = mapped_column(Interval, nullable=True)
+    milliseconds: Mapped[int] = mapped_column(Integer, nullable=True)
     # TODO
     race: Mapped["Race"] = relationship("Race", back_populates="fact_pit_stops")
     driver: Mapped["Driver"] = relationship("Driver", back_populates="fact_pit_stops")
@@ -152,19 +152,19 @@ class RaceResult(Base):
     driver_id: Mapped[int] = mapped_column(ForeignKey('dim_drivers.driver_id'))
     status_id: Mapped[int] = mapped_column(ForeignKey('dim_status.status_id'))
     constructor_id: Mapped[int] = mapped_column(ForeignKey('dim_constructors.constructor_id'))
-    laps: Mapped[int]
-    passing_time: Mapped[timedelta] = mapped_column(Interval) # timedelta is compatible with postgres Interval
-    car_number: Mapped[int]
-    grid: Mapped[int]
-    driver_position: Mapped[int]
-    position_text: Mapped[str] = mapped_column(String(2))
-    position_order: Mapped[int]
-    driver_rank: Mapped[int]
-    milliseconds: Mapped[int]
-    fastest_lap: Mapped[int]
-    fastest_lap_time: Mapped[timedelta] = mapped_column(Interval)
-    fastest_lap_speed: Mapped[float]
-    points: Mapped[float]
+    laps: Mapped[int] = mapped_column(Integer, nullable=True)
+    passing_time: Mapped[timedelta] = mapped_column(Interval, nullable=True) # timedelta is compatible with postgres Interval
+    car_number: Mapped[int] = mapped_column(Integer, nullable=True)
+    grid: Mapped[int] = mapped_column(Integer, nullable=True)
+    driver_position: Mapped[int] = mapped_column(Integer, nullable=True)
+    position_text: Mapped[str] = mapped_column(String(2), nullable=True)
+    position_order: Mapped[int] = mapped_column(Integer, nullable=True)
+    driver_rank: Mapped[int] = mapped_column(Integer, nullable=True)
+    milliseconds: Mapped[int] = mapped_column(Integer, nullable=True)
+    fastest_lap: Mapped[int] = mapped_column(Integer, nullable=True)
+    fastest_lap_time: Mapped[timedelta] = mapped_column(Interval, nullable=True)
+    fastest_lap_speed: Mapped[float] = mapped_column(Float, nullable=True)
+    points: Mapped[float] = mapped_column(Float, nullable=True)
     # TODO
     race: Mapped["Race"] = relationship("Race", back_populates="fact_race_results")
     driver: Mapped["Driver"] = relationship("Driver", back_populates="fact_race_results")
