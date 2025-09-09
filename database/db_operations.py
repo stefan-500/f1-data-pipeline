@@ -10,7 +10,7 @@ from models.metadata import Status, _Time, Circuit, Race, Constructor, Driver, D
 def check_conn():
     with Session(engine) as session:
         result = session.execute(text("select 'hello world'"))
-        # print(result.all())
+        print(result.all())
 
 def import_data() -> pd.DataFrame:
 

@@ -1,12 +1,66 @@
+# -----------------------------
+# Python Cache and compiled files
+# -----------------------------
 __pycache__/
-.pyc
-.pyo
-.pyd
+*.pyc
+*.pyo
+*.pyd
 
+# -----------------------------
+# Virtual environments and env
+# -----------------------------
 venv/
-.env/
 .env
+.env/
+*.env
 
-logs/
+# -----------------------------
+# IDE
+# -----------------------------
 .vscode/
 .idea/
+
+# -----------------------------
+# Airflow related
+# -----------------------------
+
+airflow/logs/
+airflow/config/
+airflow/airflow.db
+airflow/airflow.db-journal
+airflow/airflow-webserver.pid
+airflow/airflow-scheduler.pid
+airflow/airflow.cfg
+airflow/webserver_config.py
+airflow/dags/__pycache__/
+
+# -----------------------------
+# Docker and Postgres related
+# -----------------------------
+
+.dockerignore
+docker-compose.override.yml
+docker-compose.override.yaml
+airflow/postgres_data/
+postgres_data/
+pgdata/
+
+# -----------------------------
+# Logs and temp files
+# -----------------------------
+logs/
+*.log
+*.tmp
+*.swp
+*.swo
+
+# -----------------------------
+# Miscellaneous
+# -----------------------------
+*.bak
+*.pid
+*.seed
+*.coverage
+dist/
+build/
+*.egg-info/

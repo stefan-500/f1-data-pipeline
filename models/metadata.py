@@ -12,7 +12,7 @@ class Status(Base):
 
     status_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     status: Mapped[str] = mapped_column(String(20), nullable=True)
-    # TODO
+
     race_results: Mapped[List["RaceResult"]] = relationship(back_populates="status")
 
 class _Time(Base):
@@ -68,7 +68,7 @@ class Constructor(Base):
     const_name: Mapped[str] = mapped_column(String(30), nullable=True)
     nationality: Mapped[str] = mapped_column(String(30), nullable=True)
     url: Mapped[str] = mapped_column(String(100), nullable=True)
-    # TODO
+
     driver_standing: Mapped["DriverStanding"] = relationship("DriverStanding", back_populates="constructors")
     # A constructor can be located in many const standings (new const standing list after every race)
     constructor_standings: Mapped[List["ConstructorStanding"]] = relationship("ConstructorStanding", back_populates="constructor")
@@ -86,7 +86,7 @@ class Driver(Base):
     url: Mapped[str] = mapped_column(String(100), nullable=True)
     driver_num: Mapped[int] = mapped_column(Integer, nullable=True)
     code: Mapped[str] = mapped_column(CHAR(3), nullable=True)
-    # TODO
+
     driver_standings: Mapped[List["DriverStanding"]] = relationship("DriverStanding", back_populates="driver")
     lap_times: Mapped[List["LapTime"]] = relationship("LapTime", back_populates="driver")
     pit_stops: Mapped[List["PitStop"]] = relationship("PitStop", back_populates="driver")
@@ -103,7 +103,7 @@ class DriverStanding(Base):
     driv_position: Mapped[int] = mapped_column(Integer, nullable=True)
     position_text: Mapped[str] = mapped_column(String(2), nullable=True)
     wins: Mapped[int] = mapped_column(Integer, nullable=True)
-    # TODO
+
     driver: Mapped["Driver"] = relationship("Driver", back_populates="driver_standings")
     constructors: Mapped[List["Constructor"]] = relationship("Constructor", back_populates="driver_standing")
     race: Mapped["Race"] = relationship("Race", back_populates="driver_standings")
@@ -118,7 +118,7 @@ class ConstructorStanding(Base):
     const_position: Mapped[int] = mapped_column(Integer, nullable=True)
     position_text: Mapped[str] = mapped_column(String(2), nullable=True)
     wins: Mapped[int] = mapped_column(Integer, nullable=True)
-    # TODO
+
     constructor: Mapped["Constructor"] = relationship("Constructor", back_populates="constructor_standings")
     race: Mapped["Race"] = relationship("Race", back_populates="constructor_standings")
     
@@ -132,7 +132,7 @@ class LapTime(Base):
     lt_position: Mapped[int] = mapped_column(Integer, nullable=True)
     passing_time: Mapped[timedelta] = mapped_column(Interval, nullable=True) 
     milliseconds: Mapped[int] = mapped_column(Integer, nullable=True)
-    # TODO
+
     race: Mapped["Race"] = relationship("Race", back_populates="lap_times")
     driver: Mapped["Driver"] = relationship("Driver", back_populates="lap_times")
 
@@ -147,7 +147,7 @@ class PitStop(Base):
     ps_time: Mapped[time] = mapped_column(Time, nullable=True) # start time
     duration: Mapped[timedelta] = mapped_column(Interval, nullable=True)
     milliseconds: Mapped[int] = mapped_column(Integer, nullable=True)
-    # TODO
+
     race: Mapped["Race"] = relationship("Race", back_populates="pit_stops")
     driver: Mapped["Driver"] = relationship("Driver", back_populates="pit_stops")
 
@@ -172,7 +172,7 @@ class RaceResult(Base):
     fastest_lap_time: Mapped[timedelta] = mapped_column(Interval, nullable=True)
     fastest_lap_speed: Mapped[float] = mapped_column(Float, nullable=True)
     points: Mapped[float] = mapped_column(Float, nullable=True)
-    # TODO
+
     race: Mapped["Race"] = relationship("Race", back_populates="race_result")
     driver: Mapped["Driver"] = relationship("Driver", back_populates="race_results")
     status: Mapped["Status"] = relationship("Status", back_populates="race_results")
