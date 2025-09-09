@@ -16,8 +16,9 @@ def import_data() -> pd.DataFrame:
 
     file_path = os.getenv("DATASET_PATH")
     df = pd.read_csv(file_path, low_memory=False, na_values='\\N')
-    # df = pd.read_csv(file_path, low_memory=False)
-
+ 
+    # Replace NaN values with Python None
+    df = df.astype(object).where(pd.notnull(df), None)    
 
     # Drop unnecessary columns
     cols_to_drop = [0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]
@@ -61,13 +62,12 @@ def import_data() -> pd.DataFrame:
     df_races = df_races.reset_index(drop=True)
 
     # Merge time and circuit
-    # (every race is held at a unique date) to get time_id for each race
+    # (every race is held at a unique date)
     df_races = df_races.merge(
         df_time[['date', 'time_id']],
         on='date',
         how='inner'
     )
-
     df_races = df_races.merge(
         df_circuits[['circuitId']],
         on='circuitId',
@@ -75,6 +75,7 @@ def import_data() -> pd.DataFrame:
     )
 
     df_races.drop(columns=['date'], inplace=True)
+    
     # print(df_races.info())
     # print(df_races.head())
 
@@ -214,7 +215,6 @@ def import_data() -> pd.DataFrame:
         'time_races': 'time_of_day',
     })
 
-   
     df_circuits = df_circuits.rename(columns={
         'circuitId': 'circuit_id',
         'circuitRef': 'circuit_ref',
@@ -224,7 +224,13 @@ def import_data() -> pd.DataFrame:
         'lat': 'latitude',
         'lng': 'longitude',
         'alt': 'altitude'
+    })
 
+    df_races = df_races.rename(columns={
+        'raceId': 'race_id',
+        'circuitId': 'circuit_id',
+        'name_x': 'race_name',
+        'url_x': 'url',
     })
 
     df_drivers = df_drivers.rename(columns={
@@ -232,7 +238,6 @@ def import_data() -> pd.DataFrame:
         'driverRef': 'driver_ref',
         'number_drivers': 'driver_num',
     })
-
 
     df_constructors = df_constructors.rename(columns={
         'constructorId': 'constructor_id',
@@ -251,6 +256,7 @@ def import_data() -> pd.DataFrame:
         'position_driverstandings': 'driv_position',
         'positionText_driverstandings': 'position_text',
     })
+    
     df_cstandings = df_cstandings.rename(columns={
         'constructorStandingsId': 'const_stand_id',
         'constructorId': 'constructor_id',
@@ -260,6 +266,7 @@ def import_data() -> pd.DataFrame:
         'positionText_constructorstandings': 'position_text',
         'wins_constructorstandings': 'wins'
     })
+
     df_laps = df_laps.rename(columns={
         'raceId': 'race_id',
         'driverId': 'driver_id',
@@ -322,17 +329,21 @@ def insert_data():
             for key, model in insert_order:
                 
                 df = dfs.get(key) # gets a dataframe by the key
-                # print(type(df))
-                print(df)
+                # print(df)
+
                 if not df.empty:
                     # Convert to a list of dictionaries for insert()
                     # Each row is a dictionary
                     records = df.to_dict(orient='records')
-                    print("Row: ", records[0])
-                    print(model)
+                    
+                    # print("\n- - - - - -  - - - -  -- -  - - - - - -")
+                    # print(model)
+                    # print(records[0].keys())
+                    # print("Row 1: ", records[0])
+                    # print("- - - - - -  - - - -  -- -  - - - - - -")
+
                     # Insert data into the table
                     session.execute(insert(model), records)
-
                     print(f"Inserted {len(records)} rows into {model.__tablename__}\n")
 
             session.commit()

@@ -5,7 +5,8 @@ if __name__ == "__main__":
 
     # check_conn()
     
-    # create_tables()
-    # drop_tables()    
-    
+    drop_tables()    
+    create_tables()
     insert_data()
+    
+    
