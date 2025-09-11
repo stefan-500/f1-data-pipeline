@@ -16,7 +16,7 @@ def delete_staging_dir():
     else:
         logging.info(f"Staging directory not found, nothing to delete.")
 
-def import_csv_data():
+def prepare_csv_data():
     file_path = "data/f1Dataset.csv"
     df = pd.read_csv(file_path, low_memory=False, na_values='\\N')
  
@@ -266,6 +266,8 @@ def import_csv_data():
         'fastestLapTime': 'fastest_lap_time',
         'fastestLapSpeed': 'fastest_lap_speed',
     })
+
+    # TODO:  delete_staging_dir() functionality here  
 
     # Create staging dir if it does not exist
     staging_dir_path = Path("/opt/airflow/data/staging")

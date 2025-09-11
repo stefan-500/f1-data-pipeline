@@ -33,6 +33,8 @@ airflow/airflow-scheduler.pid
 airflow/airflow.cfg
 airflow/webserver_config.py
 airflow/dags/__pycache__/
+airflow/data/staging
+airflow/data/*.csv
 
 # -----------------------------
 # Docker and Postgres related

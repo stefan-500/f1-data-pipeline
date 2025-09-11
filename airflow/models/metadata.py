@@ -167,7 +167,7 @@ class RaceResult(Base):
     fastest_lap_speed = Column(Float, nullable=True)
     points = Column(Float, nullable=True)
 
-    race = relationship("Race", back_populates="race_result")
+    race = relationship("Race", back_populates="race_results")
     driver = relationship("Driver", back_populates="race_results")
     status = relationship("Status", back_populates="race_results")
     constructor = relationship("Constructor", back_populates="race_results")
