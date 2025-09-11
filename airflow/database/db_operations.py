@@ -1,19 +1,22 @@
-from models.base import Base
 from database.init_db import engine
 from sqlalchemy.orm import Session
 from sqlalchemy import insert
-from sqlalchemy import text
-import os
 import pandas as pd
 from models.metadata import Status, _Time, Circuit, Race, Constructor, Driver, DriverStanding, ConstructorStanding, LapTime, PitStop, RaceResult
+from pathlib import Path
+from shutil import rmtree
+import logging
 
-def check_conn():
-    with Session(engine) as session:
-        result = session.execute(text("select 'hello world'"))
-        print(result.all())
+def delete_staging_dir():
+    staging_dir_path = Path("/opt/airflow/data/staging")
 
-def import_data() -> pd.DataFrame:
+    if staging_dir_path.exists() and staging_dir_path.is_dir():
+        rmtree(staging_dir_path)
+        logging.info(f"Deleted staging directory: {staging_dir_path}")
+    else:
+        logging.info(f"Staging directory not found, nothing to delete.")
 
+def import_csv_data():
     file_path = "data/f1Dataset.csv"
     df = pd.read_csv(file_path, low_memory=False, na_values='\\N')
  
@@ -24,17 +27,11 @@ def import_data() -> pd.DataFrame:
     cols_to_drop = [0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]
     df.drop(df.columns[cols_to_drop], axis=1, inplace=True)
 
-    # print(df.info())
-    # print("duplicates:", df.duplicated())
-
     # Create a dataframe per table
 
     # STATUS
     df_status = df[['statusId', 'status']].drop_duplicates().sort_values(by='statusId')
     df_status = df_status.reset_index(drop=True)
-    
-    # print(df_status.info())
-    # print(df_status.head())
 
     # TIME
     df_time = df[['year', 'date', 'time_races']].drop_duplicates().sort_values(by=['year', 'date'])
@@ -43,17 +40,11 @@ def import_data() -> pd.DataFrame:
     df_time['date'] = pd.to_datetime(df_time['date']) # has to be type datetime
     df_time['time_id'] = df_time['date'].dt.strftime('%Y%m%d').astype(int)
 
-    # print(df_time.info())
-    # print(df_time.head())
-
     # CIRCUITS
     df_circuits = df[['circuitId', 'circuitRef', 'name_y', 'url_y', 'location', 'country', 'lat', 'lng', 'alt']].drop_duplicates().sort_values(by='circuitId')
     # name_y => circuit name
     # url_y => circuit url
     df_circuits = df_circuits.reset_index(drop=True)
-
-    # print(df_circuits.info())
-    # print(df_circuits.head())
 
     # RACES
     df_races = df[['raceId', 'name_x', 'url_x', 'round', 'circuitId', 'date']].drop_duplicates().sort_values(by='raceId')
@@ -75,23 +66,14 @@ def import_data() -> pd.DataFrame:
     )
 
     df_races.drop(columns=['date'], inplace=True)
-    
-    # print(df_races.info())
-    # print(df_races.head())
 
     # DRIVERS
     df_drivers = df[['driverId', 'driverRef', 'forename', 'surname', 'dob', 'nationality', 'url', 'number_drivers', 'code']].drop_duplicates().sort_values(by='driverId')
     df_drivers = df_drivers.reset_index(drop=True)
 
-    # print(df_drivers.info())
-    # print(df_drivers.head())
-
     # CONSTRUCTORS
     df_constructors = df[['constructorId', 'constructorRef', 'name', 'nationality_constructors', 'url_constructors']].drop_duplicates().sort_values(by='constructorId')
     df_constructors = df_constructors.reset_index(drop=True)
-
-    # print(df_constructors.info())
-    # print(df_constructors.head())
 
     # DRIVER STANDINGS
     df_dstandings = df[['driverStandingsId', 'raceId', 'driverId', 'constructorId', 'points_driverstandings', 'position_driverstandings', 'positionText_driverstandings', 'wins']].drop_duplicates().sort_values(by='driverStandingsId')
@@ -114,9 +96,6 @@ def import_data() -> pd.DataFrame:
         how='inner'
     )
 
-    # print(df_dstandings.info())
-    # print(df_dstandings.head())
-
     # CONSTRUCTOR STANDINGS
     df_cstandings = df[['constructorStandingsId', 'raceId', 'constructorId', 'points_constructorstandings', 'position_constructorstandings', 'positionText_constructorstandings', 'wins_constructorstandings']].drop_duplicates().sort_values(by='constructorStandingsId')
     df_cstandings = df_cstandings.reset_index(drop=True)
@@ -132,9 +111,6 @@ def import_data() -> pd.DataFrame:
         on='constructorId',
         how='inner'
     )
-
-    # print(df_cstandings.info())
-    # print(df_cstandings.head())
 
     # LAP TIMES
     df_laps = df[['raceId', 'driverId', 'lap', 'position_laptimes', 'time_laptimes', 'milliseconds_laptimes']].drop_duplicates().sort_values(by=['raceId', 'driverId', 'lap'])
@@ -152,9 +128,6 @@ def import_data() -> pd.DataFrame:
         how='inner'
     )
 
-    # print(df_laps.info())
-    # print(df_laps.head())
-
     # PIT STOPS
     df_stops = df[['raceId', 'driverId', 'stop', 'lap_pitstops', 'time_pitstops', 'duration', 'milliseconds_pitstops']].drop_duplicates().sort_values(by=['raceId', 'driverId', 'stop'])
     df_stops = df_stops.reset_index(drop=True)
@@ -170,9 +143,6 @@ def import_data() -> pd.DataFrame:
         on='driverId',
         how='inner'
     )
-
-    # print(df_stops.info())
-    # print(df_stops.head())
 
     # RACE RESULTS
     df_results = df[['resultId', 'raceId', 'driverId', 'statusId', 'constructorId', 'laps', 'time', 'number', 'grid', 'position', 'positionText',
@@ -201,9 +171,6 @@ def import_data() -> pd.DataFrame:
         how='inner'
     )
     
-    # print(df_results.info())
-    # print(df_results.head())
-
     # Rename df columns to match Class attributes
     df_status = df_status.rename(columns={
         'statusId': 'status_id'
@@ -300,56 +267,283 @@ def import_data() -> pd.DataFrame:
         'fastestLapSpeed': 'fastest_lap_speed',
     })
 
-    # A dictionary of dataframes
-    return {'status': df_status, 'time': df_time, 'circuits': df_circuits, 'races': df_races, 'drivers': df_drivers, 'constructors': df_constructors,
-            'dstandings': df_dstandings, 'cstandings': df_cstandings, 'laps': df_laps, 'stops': df_stops, 'race_results': df_results}
+    # Create staging dir if it does not exist
+    staging_dir_path = Path("/opt/airflow/data/staging")
+    staging_dir_path.mkdir(parents=True, exist_ok=True)
 
-def insert_data():
+    # Save a dataframe per table
+    df_status.to_parquet(staging_dir_path / "dim_status.parquet")
+    df_time.to_parquet(staging_dir_path / "dim_time.parquet")
+    df_circuits.to_parquet(staging_dir_path / "dim_circuits.parquet")
+    df_races.to_parquet(staging_dir_path / "dim_races.parquet")
+    df_drivers.to_parquet(staging_dir_path / "dim_drivers.parquet")
+    df_constructors.to_parquet(staging_dir_path / "dim_constructors.parquet")
+    df_dstandings.to_parquet(staging_dir_path / "fact_dstandings.parquet")
+    df_cstandings.to_parquet(staging_dir_path / "fact_cstandings.parquet")
+    df_laps.to_parquet(staging_dir_path / "fact_laps.parquet")
+    df_stops.to_parquet(staging_dir_path / "fact_stops.parquet")
+    df_results.to_parquet(staging_dir_path / "fact_results.parquet")
 
-    dfs = import_data()
+def insert_status():
+    # Load status from staging/
+    file_path = "data/staging/dim_status.parquet"
+    df_status = pd.read_parquet(file_path)
+    
+    # Replace NaN values with Python None
+    df_status = df_status.astype(object).where(pd.notnull(df_status), None)
 
-    # Map dict keys to model classes
-    insert_order = [
-        ('status', Status),
-        ('time', _Time),
-        ('circuits', Circuit),
-        ('races', Race),
-        ('drivers', Driver),
-        ('constructors', Constructor),
-        ('laps', LapTime),
-        ('stops', PitStop),
-        ('dstandings', DriverStanding),
-        ('cstandings', ConstructorStanding),
-        ('race_results', RaceResult)
-    ]
-
-    # Bulk insert dataframes to db
+    # Insert Status to db
     with Session(engine) as session:
         try:
-            for key, model in insert_order:
+            if not df_status.empty:
+                # Convert to a list of dictionaries for insert()
+                # Each row is a dictionary
+                statuses = df_status.to_dict(orient='records')
                 
-                df = dfs.get(key) # gets a dataframe by the key
-                # print(df)
-
-                if not df.empty:
-                    # Convert to a list of dictionaries for insert()
-                    # Each row is a dictionary
-                    records = df.to_dict(orient='records')
-                    
-                    # print("\n- - - - - -  - - - -  -- -  - - - - - -")
-                    # print(model)
-                    # print(records[0].keys())
-                    # print("Row 1: ", records[0])
-                    # print("- - - - - -  - - - -  -- -  - - - - - -")
-
-                    # Insert data into the table
-                    session.execute(insert(model), records)
-                    print(f"Inserted {len(records)} rows into {model.__tablename__}\n")
+                session.execute(insert(Status), statuses)
+                logging.info(f"Inserted {len(statuses)} rows into {Status.__tablename__}")
 
             session.commit()
-            print("All tables inserted successfully.")
+            logging.info("Status - Success!")
 
         except Exception as e:
             session.rollback()
-            print("An error occurred, transaction rolled back.\n", e)
+            logging.info("Insert Statuses error, transaction rolled back.", e)
             raise
+
+def insert_time():
+    file_path = "data/staging/dim_time.parquet"
+    df_time = pd.read_parquet(file_path)
+    df_time = df_time.astype(object).where(pd.notnull(df_time), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_time.empty:
+                time = df_time.to_dict(orient='records')
+
+                session.execute(insert(_Time), time)
+                logging.info(f"Inserted {len(time)} rows into {_Time.__tablename__}")
+
+            session.commit()
+            logging.info("Time - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Time error, transaction rolled back.", e)
+            raise
+
+def insert_circuits():
+    file_path = "data/staging/dim_circuits.parquet"
+    df_circuits = pd.read_parquet(file_path)
+    df_circuits = df_circuits.astype(object).where(pd.notnull(df_circuits), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_circuits.empty:
+                circuits = df_circuits.to_dict(orient='records')
+
+                session.execute(insert(Circuit), circuits)
+                logging.info(f"Inserted {len(circuits)} rows into {Circuit.__tablename__}")
+
+            session.commit()
+            logging.info("Circuit - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Circuits error, transaction rolled back.", e)
+            raise
+
+def insert_races():
+    file_path = "data/staging/dim_races.parquet"
+    df_races = pd.read_parquet(file_path)
+    df_races = df_races.astype(object).where(pd.notnull(df_races), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_races.empty:
+                races = df_races.to_dict(orient='records')
+                
+                session.execute(insert(Race), races)
+                logging.info(f"Inserted {len(races)} rows into {Race.__tablename__}")
+
+            session.commit()
+            logging.info("Race - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Races error, transaction rolled back.", e)
+            raise
+
+def insert_drivers():
+    file_path = "data/staging/dim_drivers.parquet"
+    df_drivers = pd.read_parquet(file_path)
+    df_drivers = df_drivers.astype(object).where(pd.notnull(df_drivers), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_drivers.empty:
+                drivers = df_drivers.to_dict(orient='records')
+
+                session.execute(insert(Driver), drivers)
+                logging.info(f"Inserted {len(drivers)} rows into {Driver.__tablename__}")
+
+            session.commit()
+            logging.info("Driver - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Drivers error, transaction rolled back.", e)
+            raise
+
+def insert_constructors():
+    file_path = "data/staging/dim_constructors.parquet"
+    df_constructors = pd.read_parquet(file_path)
+    df_constructors = df_constructors.astype(object).where(pd.notnull(df_constructors), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_constructors.empty:
+                constructors = df_constructors.to_dict(orient='records')
+   
+                session.execute(insert(Constructor), constructors)
+                logging.info(f"Inserted {len(constructors)} rows into {Constructor.__tablename__}")
+
+            session.commit()
+            logging.info("Constructor - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Constructors error, transaction rolled back.", e)
+            raise
+
+def insert_driver_standings():
+    file_path = "data/staging/fact_dstandings.parquet"
+    df_dstandings = pd.read_parquet(file_path)
+    df_dstandings = df_dstandings.astype(object).where(pd.notnull(df_dstandings), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_dstandings.empty:
+                dstandings = df_dstandings.to_dict(orient='records')
+ 
+                session.execute(insert(DriverStanding), dstandings)
+                logging.info(f"Inserted {len(dstandings)} rows into {DriverStanding.__tablename__}")
+
+            session.commit()
+            logging.info("Driver Standings - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Driver Standings error, transaction rolled back.", e)
+            raise
+
+def insert_constructor_standings():
+    file_path = "data/staging/fact_cstandings.parquet"
+    df_cstandings = pd.read_parquet(file_path)
+    df_cstandings = df_cstandings.astype(object).where(pd.notnull(df_cstandings), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_cstandings.empty:
+                cstandings = df_cstandings.to_dict(orient='records')
+
+                session.execute(insert(ConstructorStanding), cstandings)
+                logging.info(f"Inserted {len(cstandings)} rows into {ConstructorStanding.__tablename__}")
+
+            session.commit()
+            logging.info("Constructor Standings - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Constructor Standings error, transaction rolled back.", e)
+            raise
+
+def insert_lap_times():
+    file_path = "data/staging/fact_laps.parquet"
+    df_laps = pd.read_parquet(file_path)
+    df_laps = df_laps.astype(object).where(pd.notnull(df_laps), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_laps.empty:
+                laps = df_laps.to_dict(orient='records')
+
+                session.execute(insert(LapTime), laps)
+                logging.info(f"Inserted {len(laps)} rows into {LapTime.__tablename__}")
+
+            session.commit()
+            logging.info("Lap Times - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Lap Times error, transaction rolled back.", e)
+            raise
+
+def insert_pit_stops():
+    file_path = "data/staging/fact_stops.parquet"
+    df_stops = pd.read_parquet(file_path)
+    df_stops = df_stops.astype(object).where(pd.notnull(df_stops), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_stops.empty:
+                stops = df_stops.to_dict(orient='records')
+
+                session.execute(insert(PitStop), stops)
+                logging.info(f"Inserted {len(stops)} rows into {PitStop.__tablename__}")
+
+            session.commit()
+            logging.info("Pit Stops - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Pit Stops error, transaction rolled back.", e)
+            raise
+
+def insert_race_results():
+    file_path = "data/staging/fact_results.parquet"
+    df_results = pd.read_parquet(file_path)
+    df_results = df_results.astype(object).where(pd.notnull(df_results), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_results.empty:
+                results = df_results.to_dict(orient='records')
+
+                session.execute(insert(RaceResult), results)
+                logging.info(f"Inserted {len(results)} rows into {RaceResult.__tablename__}")
+
+            session.commit()
+            logging.info("Race Result - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.info("Insert Race Results error, transaction rolled back.", e)
+            raise
+
+def validate_insert():
+    # Count total rows in each table
+    with Session(engine) as session:
+        rows_status = session.query(Status).count()
+        rows_time = session.query(_Time).count()
+        rows_circuits = session.query(Circuit).count() 
+        rows_races = session.query(Race).count()
+        rows_drivers = session.query(Driver).count()
+        rows_constructors = session.query(Constructor).count() 
+        rows_dstandings = session.query(DriverStanding).count()
+        rows_cstandings = session.query(ConstructorStanding).count()
+        rows_laps = session.query(LapTime).count() 
+        rows_stops = session.query(PitStop).count()
+        rows_results = session.query(RaceResult).count()
+
+        logging.info(f"Status total rows: {rows_status}")
+        logging.info(f"Time total rows: {rows_time}")
+        logging.info(f"Circuits total rows: {rows_circuits}")
+        logging.info(f"Races total rows: {rows_races}")
+        logging.info(f"Drivers total rows: {rows_drivers}")
+        logging.info(f"Constructors total rows: {rows_constructors}")
+        logging.info(f"Driver Standings total rows: {rows_dstandings}")
+        logging.info(f"Constructors Standings total rows: {rows_cstandings}")
+        logging.info(f"Lap Times total rows: {rows_laps}")
+        logging.info(f"Pit Stops total rows: {rows_stops}")
+        logging.info(f"Race Results total rows: {rows_results}")
