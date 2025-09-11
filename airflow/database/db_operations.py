@@ -14,7 +14,7 @@ def check_conn():
 
 def import_data() -> pd.DataFrame:
 
-    file_path = os.getenv("DATASET_PATH")
+    file_path = "data/f1Dataset.csv"
     df = pd.read_csv(file_path, low_memory=False, na_values='\\N')
  
     # Replace NaN values with Python None
