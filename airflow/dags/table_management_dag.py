@@ -12,7 +12,8 @@ with DAG(
     description="Deletes all database tables and recreates them from metadata.",
     start_date=datetime(2025, 9, 10),
     schedule=None,
-    catchup=False
+    catchup=False,
+    tags=["Reset", "Recreate"]
 ) as dag:
     
     drop_tables = PythonOperator(

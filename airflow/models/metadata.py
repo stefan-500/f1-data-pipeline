@@ -20,6 +20,15 @@ class _Time(Base):
 
     race = relationship("Race", back_populates="time")
 
+class QualificationDate(Base):
+    __tablename__ = "dim_quali_dates"
+
+    quali_date_id = Column(Integer, primary_key=True, autoincrement=False)
+    race_id = Column(Integer, ForeignKey('dim_races.race_id'))
+    quali_date = Column(Date, nullable=True)
+
+    race = relationship("Race", back_populates="qualifying")
+
 class Circuit(Base):
     __tablename__ = "dim_circuits"
 
@@ -47,6 +56,7 @@ class Race(Base):
 
     circuit = relationship("Circuit", back_populates="race")
     time = relationship("_Time", back_populates="race")
+    qualifying = relationship("QualificationDate", back_populates="race")
     driver_standings = relationship("DriverStanding", back_populates="race")
     constructor_standings = relationship("ConstructorStanding", back_populates="race")
     lap_times = relationship("LapTime", back_populates="race")

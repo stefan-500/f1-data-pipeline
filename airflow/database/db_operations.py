@@ -1,8 +1,8 @@
 from database.init_db import engine
 from sqlalchemy.orm import Session
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 import pandas as pd
-from models.metadata import Status, _Time, Circuit, Race, Constructor, Driver, DriverStanding, ConstructorStanding, LapTime, PitStop, RaceResult
+from models.metadata import Status, _Time, Circuit, Race, Constructor, Driver, DriverStanding, ConstructorStanding, LapTime, PitStop, RaceResult, QualificationDate
 from pathlib import Path
 from shutil import rmtree
 import logging
@@ -520,11 +520,50 @@ def insert_race_results():
             logging.debug("Insert Race Results error, transaction rolled back.", e)
             raise
 
+def insert_quali_dates():
+    file_path = "data/staging/qualifying.parquet"
+    df_qualifying = pd.read_parquet(file_path)
+    df_qualifying = df_qualifying.astype(object).where(pd.notnull(df_qualifying), None)
+
+    with Session(engine) as session:
+        try:
+            if not df_qualifying.empty:
+                
+                qualifying = df_qualifying.to_dict(orient='records')
+                records = []
+                
+                for row in qualifying:
+                    # Link Qualifying with Race by season(time_year) and round
+                    race = session.execute(
+                        select(Race).join(_Time, Race.time_id == _Time.time_id)
+                        .where(_Time.time_year == str(row['season']))
+                        .where(Race.round == row['round'])
+                    ).scalar_one_or_none()
+
+                    if race:
+                        row['race_id'] = race.race_id
+                        records.append(row)
+                    else:
+                        logging.warning(f"No matching race for year {row['season']} round {row['round']}.")
+
+                if records:
+                    session.execute(insert(QualificationDate), records)
+                    logging.info(f"Inserted {len(records)} rows into {QualificationDate.__tablename__}")
+
+                session.commit()
+                logging.info("Qualification Date - Success!")
+
+        except Exception as e:
+            session.rollback()
+            logging.debug("Insert Qualification Dates error, transaction rolled back.", e)
+            raise    
+
 def validate_insert():
     # Count total rows in each table
     with Session(engine) as session:
         rows_status = session.query(Status).count()
         rows_time = session.query(_Time).count()
+        rows_quali_dates = session.query(QualificationDate).count()
         rows_circuits = session.query(Circuit).count() 
         rows_races = session.query(Race).count()
         rows_drivers = session.query(Driver).count()
@@ -537,6 +576,7 @@ def validate_insert():
 
         logging.info(f"Status total rows: {rows_status}")
         logging.info(f"Time total rows: {rows_time}")
+        logging.info(f"Qualifying Dates total rows: {rows_quali_dates}")
         logging.info(f"Circuits total rows: {rows_circuits}")
         logging.info(f"Races total rows: {rows_races}")
         logging.info(f"Drivers total rows: {rows_drivers}")

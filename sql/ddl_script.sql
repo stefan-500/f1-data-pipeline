@@ -14,6 +14,13 @@ CREATE TABLE dim_time (
 	PRIMARY KEY(time_id)
 );
 
+CREATE TABLE dim_quali_date (
+	quali_date_id integer,
+	quali_date date,
+	quali_time time,
+	PRIMARY KEY(time_id)
+);
+
 CREATE TABLE dim_circuits (
 	circuit_id serial,
 	circuit_ref varchar(20),
@@ -30,6 +37,7 @@ CREATE TABLE dim_circuits (
 CREATE TABLE dim_races (
 	race_id serial,
 	time_id integer REFERENCES dim_time(time_id),
+	quali_date_id integer REFERENCES dim_quali_date(quali_date_id),
 	circuit_id integer REFERENCES dim_circuits(circuit_id),
 	race_name varchar(80),
 	url varchar(100),
