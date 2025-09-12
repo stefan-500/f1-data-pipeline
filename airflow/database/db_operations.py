@@ -7,15 +7,6 @@ from pathlib import Path
 from shutil import rmtree
 import logging
 
-def delete_staging_dir():
-    staging_dir_path = Path("/opt/airflow/data/staging")
-
-    if staging_dir_path.exists() and staging_dir_path.is_dir():
-        rmtree(staging_dir_path)
-        logging.info(f"Deleted staging directory: {staging_dir_path}")
-    else:
-        logging.info(f"Staging directory not found, nothing to delete.")
-
 def prepare_csv_data():
     file_path = "data/f1Dataset.csv"
     df = pd.read_csv(file_path, low_memory=False, na_values='\\N')
@@ -267,10 +258,16 @@ def prepare_csv_data():
         'fastestLapSpeed': 'fastest_lap_speed',
     })
 
-    # TODO:  delete_staging_dir() functionality here  
+    # Delete staging directory if it exists  
+    staging_dir_path = Path("/opt/airflow/data/staging")
+
+    if staging_dir_path.exists() and staging_dir_path.is_dir():
+        rmtree(staging_dir_path)
+        logging.info(f"Deleted staging directory: {staging_dir_path}")
+    else:
+        logging.info(f"Staging directory not found, nothing to delete.")
 
     # Create staging dir if it does not exist
-    staging_dir_path = Path("/opt/airflow/data/staging")
     staging_dir_path.mkdir(parents=True, exist_ok=True)
 
     # Save a dataframe per table
@@ -310,7 +307,7 @@ def insert_status():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Statuses error, transaction rolled back.", e)
+            logging.debug("Insert Statuses error, transaction rolled back.", e)
             raise
 
 def insert_time():
@@ -331,7 +328,7 @@ def insert_time():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Time error, transaction rolled back.", e)
+            logging.debug("Insert Time error, transaction rolled back.", e)
             raise
 
 def insert_circuits():
@@ -352,7 +349,7 @@ def insert_circuits():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Circuits error, transaction rolled back.", e)
+            logging.debug("Insert Circuits error, transaction rolled back.", e)
             raise
 
 def insert_races():
@@ -373,7 +370,7 @@ def insert_races():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Races error, transaction rolled back.", e)
+            logging.debug("Insert Races error, transaction rolled back.", e)
             raise
 
 def insert_drivers():
@@ -394,7 +391,7 @@ def insert_drivers():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Drivers error, transaction rolled back.", e)
+            logging.debug("Insert Drivers error, transaction rolled back.", e)
             raise
 
 def insert_constructors():
@@ -415,7 +412,7 @@ def insert_constructors():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Constructors error, transaction rolled back.", e)
+            logging.debug("Insert Constructors error, transaction rolled back.", e)
             raise
 
 def insert_driver_standings():
@@ -436,7 +433,7 @@ def insert_driver_standings():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Driver Standings error, transaction rolled back.", e)
+            logging.debug("Insert Driver Standings error, transaction rolled back.", e)
             raise
 
 def insert_constructor_standings():
@@ -457,7 +454,7 @@ def insert_constructor_standings():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Constructor Standings error, transaction rolled back.", e)
+            logging.debug("Insert Constructor Standings error, transaction rolled back.", e)
             raise
 
 def insert_lap_times():
@@ -478,7 +475,7 @@ def insert_lap_times():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Lap Times error, transaction rolled back.", e)
+            logging.debug("Insert Lap Times error, transaction rolled back.", e)
             raise
 
 def insert_pit_stops():
@@ -499,7 +496,7 @@ def insert_pit_stops():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Pit Stops error, transaction rolled back.", e)
+            logging.debug("Insert Pit Stops error, transaction rolled back.", e)
             raise
 
 def insert_race_results():
@@ -520,7 +517,7 @@ def insert_race_results():
 
         except Exception as e:
             session.rollback()
-            logging.info("Insert Race Results error, transaction rolled back.", e)
+            logging.debug("Insert Race Results error, transaction rolled back.", e)
             raise
 
 def validate_insert():

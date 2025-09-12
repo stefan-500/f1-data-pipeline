@@ -1,7 +1,6 @@
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from database.db_operations import (
-    delete_staging_dir,
     prepare_csv_data,
     insert_status,
     insert_time,
@@ -29,10 +28,6 @@ with DAG(
     schedule=None,
     catchup=False
 ) as dag:
-    delete_staging = PythonOperator(
-        task_id="delete_staging_dir",
-        python_callable=delete_staging_dir
-    )
 
     prepare_data = PythonOperator(
         task_id="prepare_csv_data",
@@ -100,7 +95,7 @@ with DAG(
     )
 
     (
-    delete_staging >> prepare_data
+    prepare_data
     >> [insert_to_status, insert_to_time, insert_to_circuits, insert_to_constructors, insert_to_drivers] # run in parallel
     >> insert_to_races
     >> [insert_to_driver_standings, insert_to_constructor_standings, insert_to_lap_times, insert_to_pit_stops, insert_to_race_results]
