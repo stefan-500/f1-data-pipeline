@@ -518,45 +518,7 @@ def insert_race_results():
         except Exception as e:
             session.rollback()
             logging.debug("Insert Race Results error, transaction rolled back.", e)
-            raise
-
-def insert_quali_dates():
-    file_path = "data/staging/qualifying.parquet"
-    df_qualifying = pd.read_parquet(file_path)
-    df_qualifying = df_qualifying.astype(object).where(pd.notnull(df_qualifying), None)
-
-    with Session(engine) as session:
-        try:
-            if not df_qualifying.empty:
-                
-                qualifying = df_qualifying.to_dict(orient='records')
-                records = []
-                
-                for row in qualifying:
-                    # Link Qualifying with Race by season(time_year) and round
-                    race = session.execute(
-                        select(Race).join(_Time, Race.time_id == _Time.time_id)
-                        .where(_Time.time_year == str(row['season']))
-                        .where(Race.round == row['round'])
-                    ).scalar_one_or_none()
-
-                    if race:
-                        row['race_id'] = race.race_id
-                        records.append(row)
-                    else:
-                        logging.warning(f"No matching race for year {row['season']} round {row['round']}.")
-
-                if records:
-                    session.execute(insert(QualificationDate), records)
-                    logging.info(f"Inserted {len(records)} rows into {QualificationDate.__tablename__}")
-
-                session.commit()
-                logging.info("Qualification Date - Success!")
-
-        except Exception as e:
-            session.rollback()
-            logging.debug("Insert Qualification Dates error, transaction rolled back.", e)
-            raise    
+            raise 
 
 def validate_insert():
     # Count total rows in each table

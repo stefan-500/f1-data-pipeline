@@ -13,10 +13,9 @@ from database.db_operations import (
     insert_lap_times,
     insert_pit_stops,
     insert_race_results,
-    insert_quali_dates,
     validate_insert
 )
-from api.api_scraper import scrape_data
+from api.api_operataions import produce_quali_dates, consume_and_insert_quali
 from datetime import datetime
 
 args = {
@@ -37,9 +36,9 @@ with DAG(
         python_callable=prepare_csv_data
     )
 
-    prepare_api = PythonOperator(
-        task_id="prepare_api_data",
-        python_callable=scrape_data
+    produce_quali = PythonOperator(
+        task_id="produce_quali_dates",
+        python_callable=produce_quali_dates
     )
 
     insert_to_status = PythonOperator(
@@ -62,9 +61,9 @@ with DAG(
         python_callable=insert_races
     )
 
-    insert_to_quali_dates = PythonOperator(
-        task_id="insert_quali_dates",
-        python_callable=insert_quali_dates
+    consume_quali_dates = PythonOperator(
+        task_id="consume_and_insert_quali",
+        python_callable=consume_and_insert_quali
     )
 
     insert_to_drivers = PythonOperator(
@@ -109,10 +108,10 @@ with DAG(
 
     (
     prepare_csv
-    >> prepare_api
+    >> produce_quali
     >> [insert_to_status, insert_to_time, insert_to_circuits, insert_to_constructors, insert_to_drivers]
     >> insert_to_races
-    >> insert_to_quali_dates
+    >> consume_quali_dates
     >> [insert_to_driver_standings, insert_to_constructor_standings, insert_to_lap_times, insert_to_pit_stops, insert_to_race_results]
     >> validate
     )
