@@ -15,7 +15,7 @@ from database.db_operations import (
     insert_race_results,
     validate_insert
 )
-from api.api_operataions import produce_quali_dates, consume_and_insert_quali
+from airflow.api.api_operations import produce_quali_dates, consume_and_insert_quali
 from datetime import datetime
 
 args = {
