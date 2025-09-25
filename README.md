@@ -8,7 +8,7 @@ This project is a Formula One data pipeline built during my internship at **Vega
 
 ## Data Sources
 
-### Formula One CSV
+### Formula One CSV Dataset
 
 #### The main data source is a Formula One CSV file. It contains various Formula One raw data such as: driver, constructor, race, race results, etc. 
 
@@ -52,19 +52,8 @@ f1-data-pipeline/
 |
 ├── docs/
 │   ├── diagrams/
-│   │   └── data_pipeline_diagram.jpg
-│   │   └── erd_1.jpg
-│   │   └── erd_v_7.png
-│   │   └── erd.jpg
 │   ├── dags/
-│   │   └── f1_data_pipeline_graph_v_2.png
-│   │   └── f1_data_pipeline_graph_v_4.png
 │   ├── visuals/
-│   │   └── page_1_18_hamilton.jpg
-│   │   └── page_1_22_monaco.jpg
-│   │   └── page_2_comparison.jpg
-│   │   └── page_2_general.jpg
-│   │   └── page_3.jpg
 |
 ├── sql/
 │   ├── csv_data_import_script.sql
@@ -101,7 +90,9 @@ cd f1-data-pipeline
 ### 3. Run Containers
 
 ```bash
-docker-compose up
+# f1-data-pipeline/airflow/
+
+docker compose up
 ```
 ---
 
